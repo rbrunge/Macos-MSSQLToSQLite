@@ -6,6 +6,14 @@
 
 ---
 
+This is a fork of [xmikedanielsx/MSSQLToSQLite](https://github.com/xmikedanielsx/MSSQLToSQLite).
+
+Original documentation is this: [doc](./docs/index.html).
+
+My purpose was to make it run on macOS using terminal. I have not tested the windows part at all.
+
+---
+
 ## Table of Contents
 
 1. [Quick Start](#quick-start)
@@ -23,7 +31,7 @@
 
 ```bash
 # Navigate to project
-cd /Users/robertrunge/code/_robert/Macos-MSSQLToSQLite
+cd ~/code/Macos-MSSQLToSQLite
 
 # Build
 dotnet build ClassLibrary/ClassLibrary.csproj
