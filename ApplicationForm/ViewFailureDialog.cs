@@ -16,6 +16,7 @@ namespace ApplicationForm
             InitializeComponent();
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public ViewSchema View
         {
             get { return _view; }

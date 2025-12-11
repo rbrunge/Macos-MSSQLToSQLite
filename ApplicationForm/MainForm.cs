@@ -151,7 +151,7 @@ namespace ApplicationForm
             this.Cursor = Cursors.WaitCursor;
             SqlConversionHandler handler = new SqlConversionHandler(delegate(bool done,
                 bool success, int percent, string msg) {
-                    Invoke(new MethodInvoker(delegate() {
+                    Invoke(new System.Windows.Forms.MethodInvoker(delegate() {
                         UpdateSensitivity();
                         lblMessage.Text = msg;
                         pbrProgress.Value = percent;
@@ -193,7 +193,7 @@ namespace ApplicationForm
             SqlTableSelectionHandler selectionHandler = new SqlTableSelectionHandler(delegate(List<TableSchema> schema)
             {
                 List<TableSchema> updated = null;
-                Invoke(new MethodInvoker(delegate
+                Invoke(new System.Windows.Forms.MethodInvoker(delegate
                 {
                     // Allow the user to select which tables to include by showing him the 
                     // table selection dialog.
@@ -208,7 +208,7 @@ namespace ApplicationForm
             FailedViewDefinitionHandler viewFailureHandler = new FailedViewDefinitionHandler(delegate(ViewSchema vs)
             {
                 string updated = null;
-                Invoke(new MethodInvoker(delegate
+                Invoke(new System.Windows.Forms.MethodInvoker(delegate
                 {
                     ViewFailureDialog dlg = new ViewFailureDialog();
                     dlg.View = vs;
@@ -258,13 +258,13 @@ namespace ApplicationForm
         private static string GetSqlServerConnectionString(string address, string db)
         {
             string res = @"Data Source=" + address.Trim() +
-                    ";Initial Catalog="+db.Trim()+";Integrated Security=SSPI;";
+                    ";Initial Catalog="+db.Trim()+";Integrated Security=SSPI;ApplicationIntent=ReadOnly";
             return res;
         }
         private static string GetSqlServerConnectionString(string address, string db, string user, string pass)
         {
             string res = @"Data Source=" + address.Trim() +
-            	";Initial Catalog="+db.Trim()+";User ID=" + user.Trim() + ";Password=" + pass.Trim();
+            	";Initial Catalog="+db.Trim()+";User ID=" + user.Trim() + ";Password=" + pass.Trim() + ";ApplicationIntent=ReadOnly";
             return res;
         }
         #endregion

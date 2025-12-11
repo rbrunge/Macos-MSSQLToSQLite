@@ -1,26 +1,21 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
+namespace ClassLibrary;
 
-namespace ClassLibrary
+/// <summary>
+///     Contains the schema of a single DB column.
+/// </summary>
+public class ColumnSchema
 {
-    /// <summary>
-    /// Contains the schema of a single DB column.
-    /// </summary>
-    public class ColumnSchema
-    {
-        public string ColumnName;
+    public string ColumnName;
 
-        public string ColumnType;
+    public string ColumnType;
 
-        public int Length;
+    public string DefaultValue;
 
-        public bool IsNullable;
+    public bool? IsCaseSensitivite = null;
 
-        public string DefaultValue;
+    public bool IsIdentity;
 
-        public bool IsIdentity;
+    public bool IsNullable;
 
-        public bool? IsCaseSensitivite = null;
-    }
+    public int Length;
 }

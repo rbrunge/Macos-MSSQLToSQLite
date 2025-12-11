@@ -1,0 +1,19 @@
+<Project>
+  <PropertyGroup>
+    <!-- Enable Central Package Management -->
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Shared package versions across all projects -->
+    <PackageVersion Include="log4net" Version="2.0.15" />
+    <PackageVersion Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+    <PackageVersion Include="System.CommandLine.NamingConventionBinder" Version="2.0.0-beta4.22272.1" />
+    <PackageVersion Include="System.Configuration.ConfigurationManager" Version="9.0.0" />
+    <!-- Modern, maintained SQL Client package without vulnerabilities -->
+    <PackageVersion Include="Microsoft.Data.SqlClient" Version="5.2.2" />
+    <!-- Cross-platform SQLite package that works on macOS, Linux, and Windows -->
+    <PackageVersion Include="Microsoft.Data.Sqlite" Version="9.0.0" />
+  </ItemGroup>
+</Project>
+

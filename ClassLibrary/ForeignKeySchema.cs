@@ -1,21 +1,15 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
+namespace ClassLibrary;
 
-namespace ClassLibrary
+public class ForeignKeySchema
 {
-	public class ForeignKeySchema
-	{
-	    public string TableName;
+    public bool CascadeOnDelete;
 
-		public string ColumnName;
+    public string ColumnName;
 
-		public string ForeignTableName;
+    public string ForeignColumnName;
 
-		public string ForeignColumnName;
+    public string ForeignTableName;
 
-	    public bool CascadeOnDelete;
-
-	    public bool IsNullable;
-	}
+    public bool IsNullable;
+    public string TableName;
 }

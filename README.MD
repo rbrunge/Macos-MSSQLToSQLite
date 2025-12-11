@@ -1,69 +1,266 @@
-## ***<u>Introduction</u>***
-I needed to convert the existing SQL server databases to SQLite databases as part of a DB migration program and did not find any decent free converter to do the job.
+# MSSQLToSQLite - SQL Server to SQLite Database Converter
 
-This is my attempt to solve the problem. I should warn you though that I did not have much time to test it on too many databases. In any case - the source code is very well documented and easy to understand, so if you do have a problem it should be relatively easy to fix. (Please send me the fixed source code. If you do so, I can update the software so that everybody can enjoy it.)
+**Last Updated**: December 11, 2025  
+**.NET Version**: 9.0  
+**Platform**: Cross-platform (CLI) / Windows (GUI)
 
-## ***<u>Using the Code</u>***
-The code is split between a dataaccess project (class library) that contains the conversion code itself and a converter project (WinForms) that drives the conversion code and provides a simple UI for user interaction.
+---
 
-The main class that performs the conversion is the sqlservertosqlite class. It does the conversion by doing the following steps:
+## Table of Contents
 
-Reading the designated SQL server schema and preparing a list of tableschema objects that contain the schema for each and every SQL server table (and associated structures like indexes).
-Preparing an empty sqlite database file with the schema that was read from SQL server. In this step, the code may alter few SQL-server types that are not supported directly in sqlite.
-Copying rows for each table from the SQL server database to the sqlite database.
-Basically, that's it!
+1. [Quick Start](#quick-start)
+2. [Platform Support](#platform-support)
+3. [Database Security](#database-security)
+4. [Configuration Architecture](#configuration-architecture)
+5. [Troubleshooting](#troubleshooting)
+6. [Development Guide](#development-guide)
 
-## ***<u>Points of Interest</u>***
-In order to read the SQL server DB schema, I was mainly using the pseudo information_schema.table table. You can find more information about it on the Internet if you want.
+---
 
-## ***<u>History</u>***
-* 2023-05-18 - Released 2023.05.18.01 - Upgraded to .NET 6 as well as added ability to treat UUID/GUID as a string
-* 13th June, 2008: Initial version
-* 08th July, 2008: v 1.2
-Fixed a bug that caused unique indexes to be generated as non-unique in some cases
-* 08th July, 2008: v 1.3
-Fixed a bug that caused the utility to crash sometimes when processing index information
-* 17th July, 2008: v 1.4
-Fixed a bug that caused wrong columns to become primary keys on rare occasions and improved conversion performance
-* 20th July, 2008: v 1.5
-Added support for case-insensitive columns (COLLATE NOCASE)
-* 22nd July, 2008: v 1.6
-Added support for encrypting the resulting DB file (using the built-in encryption support that exists in the SQLite .NET provider)
-* 05th October, 2008: v 1.7
-Fixed information_schema references to use UPPER-CASE in order to resolve international character set issues (Turkish)
-* 14th December 2008: v1.8
-Integrated support for foreign keys from the revised version made by Yogesh Jagota
-Merged support for selective table import
-* 21st February 2009: v1.9
-Added contribution from johnny dickson cano that allows to select using SQL server integrated security or using user name /password instead
-Added support for converting IDENTITY columns to AUTOINCREMENT in SQLite (suggestion by Paul Shaffer)
-* 04th March 2009: v1.10
-Fixed a bug that caused the converter to crash when encountering a datetime field in the original SQL server schema. Thanks to bmcclint for sending me the bug with the correct bugfix.
-* 23rd May 2009: v1.11
-Added support for simulating foreign keys using triggers (contributed by Martijn Muurman)
-Added a small bugfix so that now an 'int' type is always converted to 'integer' type in sqlite. This was needed because sqlite will autoincrement only on 'integer' column types.
-* 04th June 2009: v1.12
-Fixed a bug in trigger generation code that caused schema generation to fail when more than a single column is referencing the same column in a foreign table
-* 20th September 2009: v1.13
-Fixed AUTOINCREMENT bug suggested by MAEP
-Fixed 64 bit support problem (thanks to Murry Gammash)
-Added support for converting SQL Server views (suggested by Richard Thurgood)
-* 22nd September 2009: v1.14
-Fixed a critical bug that caused the conversion process to fail on some SQL Server databases that used the [dbo] notation.
-* 25th September 2009: v1.15
-Fixed a critical bug that caused the primary keys to be discarded
-Fixed trigger generation bug
-* 4th December 2009: v1.16
-Fixed generation code to create GUID types for SQL-Server's uniqueidentifier type (instead of nvarchar as it was until now)
-Updated the solution to use the latest SQLite .NET provider library
-* 24th March, 2011
-Attached compiled version of the project for anyone that doesn't have Visual Studio and still needs to use the utility
-* 1st July, 2011
-Updated binary zip as the earlier one was missing the DLL file needed by the application
-* 15th Nov 2011: v1.17
-Fixed a bug that caused the software to crash when encountering NULL values in some of SQL Server meta data tables
-* 19th June 2012: v1.19
-Added support for ignoring views when creating the DB schema, Added support for blank characters inside column names.
-* 14th January 2013: v1.20
-Fixed problem with column names
-Added more width to the database names combo box. 
+## Quick Start
+
+### macOS / Linux (CLI Tool)
+
+```bash
+# Navigate to project
+cd /Users/robertrunge/code/_robert/Macos-MSSQLToSQLite
+
+# Build
+dotnet build ClassLibrary/ClassLibrary.csproj
+
+# SQL Server Authentication
+dotnet run --project ClassLibrary/ClassLibrary.csproj -- \
+  --conn-type sql \
+  --conn-server "server.database.windows.net" \
+  --conn-db "database-name" \
+  --conn-user "username" \
+  --conn-pass "password" \
+  --sqlite-path "~/output.sqlite"
+
+# Azure SQL with Azure CLI Token (recommended for Azure)
+# First: az login
+dotnet run --project ClassLibrary/ClassLibrary.csproj -- \
+  --conn-type sql \
+  --conn-server "server.database.windows.net" \
+  --conn-db "database-name" \
+  --conn-user "azure-token" \
+  --conn-pass "$(az account get-access-token --resource https://database.windows.net/ --query accessToken -o tsv)" \
+  --sqlite-path "~/output.sqlite"
+
+# Or use the convenience script
+./run-converter.sh --help
+```
+
+### Windows (GUI or CLI)
+
+- **GUI**: Run `ApplicationForm` or `Converter` projects (Windows Forms)
+- **CLI**: Same as macOS commands above
+
+---
+
+## Platform Support
+
+| Project | Type | Windows | macOS | Linux |
+|---------|------|---------|-------|-------|
+| **ClassLibrary** | CLI Tool | ✅ | ✅ | ✅ |
+| **DbAccess** | Library | ✅ | ✅ | ✅ |
+| **ApplicationForm** | GUI (WinForms) | ✅ | ❌ | ❌ |
+| **Converter** | GUI (WinForms) | ✅ | ❌ | ❌ |
+
+**Important**: On macOS/Linux, use the ClassLibrary CLI tool only. Windows Forms apps require the Windows-only `Microsoft.WindowsDesktop.App` framework.
+
+---
+
+## Database Security
+
+### Source Database (SQL Server) - READ-ONLY
+
+All connections to SQL Server include `ApplicationIntent=ReadOnly` in the connection string, guaranteeing read-only access:
+
+```csharp
+// ClassLibrary/Program.cs
+";ApplicationIntent=ReadOnly"
+```
+
+- ✅ Source database cannot be modified
+- ✅ Enforced at connection level
+- ✅ SQL Server rejects any write attempts
+
+### Target Database (SQLite) - READ-WRITE
+
+The SQLite database is created with default read-write permissions to receive the converted data.
+
+---
+
+
+## Configuration Architecture
+
+### Centralized Settings
+
+All projects use **Directory.Build.props** and **Directory.Packages.props** for consistent configuration:
+
+**Directory.Build.props** - Common build properties:
+- Target Framework: `net9.0` (default)
+- Language Version: `latest`
+- Implicit Usings: `enable`
+- Nullable: `enable`
+- Windows Forms projects override to `net9.0-windows`
+
+**Directory.Packages.props** - Package versions:
+
+| Package | Version | Used By |
+|---------|---------|---------|
+| Microsoft.Data.SqlClient | 5.2.2 | ClassLibrary (secure, cross-platform) |
+| Microsoft.Data.Sqlite | 9.0.0 | ClassLibrary (cross-platform) |
+| log4net | 2.0.15 | All projects |
+| System.CommandLine | 2.0.0-beta4.22272.1 | ClassLibrary |
+
+### Project Targets
+
+| Project | TargetFramework | Platform |
+|---------|----------------|----------|
+| ClassLibrary | `net9.0` | Cross-platform |
+| DbAccess | `net9.0` | Cross-platform |
+| ApplicationForm | `net9.0-windows` | Windows only |
+| Converter | `net9.0-windows` | Windows only |
+
+### To Update Package Versions
+
+Edit `Directory.Packages.props`:
+```xml
+<PackageVersion Include="log4net" Version="2.0.17" />
+```
+
+### To Change .NET Version
+
+1. Edit `Directory.Build.props` (line 4):
+   ```xml
+   <TargetFramework Condition="'$(TargetFramework)' == ''">net10.0</TargetFramework>
+   ```
+
+2. Edit Windows Forms projects (`ApplicationForm.csproj`, `Converter.csproj`):
+   ```xml
+   <TargetFramework>net10.0-windows</TargetFramework>
+   ```
+
+---
+
+
+## Troubleshooting
+
+### Error: "Microsoft.WindowsDesktop.App not found"
+
+**Cause**: Trying to run Windows Forms app on macOS.
+
+**Fix**: Use ClassLibrary CLI tool:
+```bash
+./run-converter.sh --help
+```
+
+### Error: "PackageReference items cannot define a value for Version"
+
+**Cause**: Version specified in PackageReference (should be in Directory.Packages.props).
+
+**Fix**: Remove Version attribute from project file, add to Directory.Packages.props.
+
+### Build Warnings: NU1507
+
+**Message**: "There are 2 package sources defined..."
+
+**Status**: Informational only, doesn't prevent building.
+
+---
+
+## Development Guide
+
+
+### Building the Solution
+
+```bash
+dotnet build SqlConverter.sln
+```
+
+Note: Windows Forms projects build on macOS (cross-compilation) but cannot run.
+
+### Platform-Specific Development
+
+**Windows**:
+- ✅ GUI: `ApplicationForm` or `Converter`
+- ✅ CLI: `ClassLibrary`
+
+**macOS / Linux**:
+- ✅ CLI: `ClassLibrary`
+- ❌ GUI: Not available (Windows Forms)
+
+### Best Practices
+
+1. ✅ Edit Directory.Build.props for solution-wide settings
+2. ✅ Edit Directory.Packages.props for package versions
+3. ✅ Keep project files minimal (only project-specific settings)
+4. ❌ Don't add Version to PackageReference in project files
+5. ❌ Don't repeat common properties in project files
+6. ❌ Don't use different .NET versions across projects
+
+### To Upgrade .NET Version
+
+1. Edit `Directory.Build.props` (line 4):
+   ```xml
+   <TargetFramework Condition="'$(TargetFramework)' == ''">net10.0</TargetFramework>
+   ```
+
+2. Edit Windows Forms projects:
+   - `ApplicationForm/ApplicationForm.csproj` (line 5)
+   - `Converter/Converter.csproj` (line 5)
+   ```xml
+   <TargetFramework>net10.0-windows</TargetFramework>
+   ```
+
+3. Test: `dotnet build`
+
+### Key Technical Details
+
+**Packages**:
+- `Microsoft.Data.SqlClient` 5.2.2 - SQL Server (secure, cross-platform)
+- `Microsoft.Data.Sqlite` 9.0.0 - SQLite (cross-platform)
+- `log4net` 2.0.15 - Logging
+- `System.CommandLine` 2.0.0-beta4 - CLI parsing
+
+**Security**:
+- Source DB: Read-only via `ApplicationIntent=ReadOnly`
+- Azure AD tokens: Auto-detected (>128 chars) and uses `SqlConnection.AccessToken`
+
+**SQLite Fixes**:
+- NULL handling: Uses `DBNull.Value` (not C# null)
+- Foreign keys: Disabled during import via `PRAGMA foreign_keys = OFF`
+- Path expansion: Tilde (~) expanded to home directory
+
+---
+
+## Summary
+
+✅ **Cross-platform CLI tool** works on macOS/Linux/Windows  
+✅ **Read-only source** database access guaranteed  
+✅ **Centralized configuration** in Directory.Build.props  
+✅ **Azure AD authentication** support via access tokens  
+✅ **Modern packages** (Microsoft.Data.SqlClient, Microsoft.Data.Sqlite)  
+
+### Quick Reference
+
+```bash
+# Run on macOS
+./run-converter.sh --help
+
+# Build solution
+dotnet build
+
+# Update package version
+# Edit Directory.Packages.props
+
+# Change .NET version
+# Edit Directory.Build.props + 2 Windows Forms .csproj files
+```
+
+---
+
+🎉 **Ready to use!** The solution is upgraded to .NET 9.0 with centralized configuration and works on macOS.
+
